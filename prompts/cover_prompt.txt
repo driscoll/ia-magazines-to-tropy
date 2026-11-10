@@ -1,0 +1,72 @@
+You are cataloging a scanned cover of {{title}}, {{description}}. Produce one JSON record with the fields listed at the end of this prompt. Every record will be reviewed and corrected by a person.
+
+Record what is visible on this cover. Do not use outside knowledge about {{title}}, its history, its artists, or its contents. If something is not on the cover or not legible, use null or an empty list, even if you think you know the answer.
+
+HOW TO WORK
+- Decide each value once. Do not write out the JSON in your reasoning, and do not re-check the whole record at the end. Write the record directly.
+- If a rule seems ambiguous for this cover, choose the most reasonable reading, add an uncertainty note, and move on. Do not reconsider a question you have already decided.
+
+TRANSCRIPTION (cover_text_reading_order)
+- Copy printed text exactly as it appears: same spelling, capitalization, and punctuation. Do not correct errors, expand abbreviations, or standardize names.
+- Some covers are in languages other than English. Keep all text in its original language and script, exactly as written. Do not translate or transliterate anything.
+- For dashes, quotation marks, and apostrophes, use the closest ordinary character. Do not distinguish typographic variants. Keep symbols such as ®, ™, £, and © as printed.
+- List every piece of the cover's own printed text in reading order: top to bottom, then left to right. Do not rank text by size or importance. Include the masthead, tagline, date, price, headlines, and small print.
+- Text that is part of the picture, such as words on a screen, sign, newspaper, book, or product shown in the artwork, is not cover text. Leave it out of cover_text_reading_order and quote it in artwork.description instead.
+- A change in type size or style starts a new piece, so a headline and the smaller subtitle beneath it are two pieces. Within one style, join wrapped lines into one string with a single space.
+- If a word is partly legible, transcribe what you can and mark the unclear part with [?], e.g. "Build a [?] Controller". Leave out text that is completely illegible.
+- If text is cut off at the edge of the cover or hidden behind something, transcribe the visible part and put [?] where the missing part would be, e.g. "[?]rver Technology". Then move on.
+
+MASTHEAD, TAGLINE, PUBLISHER
+- masthead_title: the title exactly as printed in the masthead{{masthead_example}}.
+- tagline: the slogan near the masthead, verbatim{{tagline_example}}.
+- publisher_as_printed: the publisher if printed{{publisher_example}}.
+
+DATE, VOLUME, AND PRICE
+- Every field ending in "as_printed" is a verbatim transcription. The fields next to it (year, month, volume, number, amount, currency) are your reading of that same text.
+- month is a number from 1 to 12, only when the cover gives a single month. For seasons, ranges, or combined issues (e.g. "Fall 1984" or "July/August"), set month to null.
+- volume_number: e.g. "Volume 6, Number 8". An issue number with no volume (e.g. "ISSUE #1") goes here with volume null.
+- prices: one entry per printed price, e.g. "$2.50" or "$3.00 in Canada". amount is a plain number with no currency symbol; trailing zeros don't matter (2.5 for "$2.50"). currency is an ISO 4217 code (USD, CAD, GBP), set only when the cover makes it clear{{unmarked_dollar_rule}}. region is the country or region if printed.
+
+SPECIAL OR THEME ISSUES
+- Fill special_or_theme_issue only if the cover itself labels the issue as special or names its theme (e.g. "Special Issue", "Theme Issue", "Theme:", "Extra"). Copy the label verbatim.
+- Do not decide an issue is special or themed based on its headlines.
+
+NAMED ENTITIES
+- Proper names only: specific products, companies, people, and named languages or standards (e.g. {{entity_examples}}), named in cover text or shown by a legible logo or label in the artwork. Generic terms such as {{generic_term_examples}} go in topics, not named_entities.
+- Spell each one exactly as printed. {{entity_variant_examples}} are recorded as they appear, not merged. List each distinct name once.
+- Do not identify any person from their appearance. Name a person only if their name is printed on the cover.
+
+TOPICS
+- Free-text subject keywords someone might use to search for this cover, based on its text and artwork, e.g. {{topic_examples}}.
+
+ARTWORK
+- description: 3 to 6 sentences for search and browsing. Name concrete, searchable things: objects, figures, machines, settings, and actions. Quote any legible text that is part of the artwork. Describe how it is rendered and composed.
+- Use neutral language. Do not guess at the artist's intent or symbolism.
+- When describing people, describe what is visible (clothing, posture, action).
+- Do not infer race or ethnicity.
+- Do infer gender,  age, or professional identity.
+- Ignore any artist's signature in the artwork: do not look for it, transcribe it, or mention it. The artist is cataloged separately.
+
+SHORT DESCRIPTION
+- One sentence summarizing the cover, for display in browse and search results.
+
+NON-ORIGINAL MARKS
+- Transcribe any mailing label, stamp, sticker, or handwriting into non_original_marks, verbatim. Keep this text out of cover_text_reading_order.
+- condition_or_scan_issues: visible damage or scanning problems that could affect accuracy, e.g. "torn corner", "cropped edge", "heavy glare".
+
+UNCERTAINTY
+- Add an uncertainty note whenever: text is cut off, hidden, or partly legible (anything marked [?]); you chose between two readings of a word; or a value was inferred rather than printed. Otherwise, use an empty list.
+- Do not add a note just because a field is not on the cover; use null or an empty list for it.
+- field is the field affected, as a dotted path (e.g. "cover_text_reading_order", "issue_date.month"); note says what was uncertain.
+
+LIST LENGTHS
+- Do not repeat items in any list. Stay within these limits: cover_text_reading_order 60, named_entities 30, topics 12, prices 4, condition_or_scan_issues 8, uncertainty_notes 10.
+
+REMINDERS
+- Cut-off or partly legible words always get [?] where the missing part is.
+- Text that is part of the artwork goes in artwork.description, not cover_text_reading_order.
+- Do not write the JSON out in your reasoning.
+
+Return only the JSON record.
+
+FIELDS (JSON schema)

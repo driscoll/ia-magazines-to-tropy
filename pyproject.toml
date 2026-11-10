@@ -1,0 +1,26 @@
+[project]
+name = "ia-magazines-to-tropy"
+version = "0.1.0"
+description = "Create Tropy collections based on periodicals from Internet Archive with cover descriptions based on vision-language model and human review"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Kevin Driscoll" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "internetarchive>=5.0",
+    "ollama>=0.6",
+    "pillow>=11.0",
+]
+
+[project.optional-dependencies]
+# Optional hosted backend (Claude via the Anthropic API): uv sync --extra anthropic
+anthropic = ["anthropic>=2.0"]
+
+[project.scripts]
+ia2tropy = "ia_magazines_to_tropy.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8,<0.13"]
+build-backend = "uv_build"

@@ -1,0 +1,25 @@
+# Collection data: downloaded images, model output, review corrections, exports
+data/
+
+# Credentials: never commit API keys
+*.key
+.env
+anthropic-key*
+
+# Python / uv
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Personal notes for Claude Code
+CLAUDE.local.md
+
+# Editors / OS
+*.swp
+*~
+.DS_Store
+.vscode/
+.idea/

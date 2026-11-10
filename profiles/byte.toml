@@ -1,0 +1,24 @@
+# Collection profile: everything specific to one magazine.
+# Copy this file to profiles/<name>.toml for a new title and edit the values.
+# The examples steer the model strongly, so choose ones typical of the title.
+
+name = "byte"                       # used for the data folder: data/<name>/
+collection = "byte-magazine"        # Internet Archive collection identifier
+title = "BYTE"                      # how the prompt names the magazine; also the fallback catalog title
+description = "a computer magazine published from 1975 to 1998"
+
+[examples]
+masthead = "BYTE"
+tagline = "the small systems journal"
+publisher = "A McGraw-Hill Publication"
+# Proper names typical of the covers (products, companies, people, languages, standards)
+entities = ["Apple ][", "Intel", "BASIC", "CP/M"]
+# Two spellings of one name, to show that variants are kept as printed
+entity_variants = ["Apple ][", "Apple II"]
+# Generic terms that belong in topics, not named entities
+generic_terms = ["microprocessor", "keyboards"]
+topics = ["robotics", "home computers", "BASIC programming"]
+
+[prices]
+# Currency for a "$" price with no country stated. Leave empty ("") if covers don't settle it.
+unmarked_dollar = "USD"

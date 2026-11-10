@@ -1,0 +1,20 @@
+# Collection profile for COMPUTE! magazine, used to test the pipeline beyond BYTE.
+# The examples are illustrative; check them against real covers before a full run.
+# An empty tagline or publisher example simply leaves that example out of the prompt.
+
+name = "compute"
+collection = "compute-magazine"
+title = "COMPUTE!: The Journal for Progressive Computing"
+description = "a home computer magazine published from 1979 to 1994"
+
+[examples]
+masthead = "COMPUTE!"
+tagline = "The Leading Magazine of Home, Educational, and Recreational Computing"
+publisher = "Small System Services, Inc."
+entities = ["Commodore 64", "Atari", "VIC-20", "TI-99/4A"]
+entity_variants = ["Commodore 64", "C64"]
+generic_terms = ["joystick", "disk drive"]
+topics = ["home computers", "games", "BASIC programming"]
+
+[prices]
+unmarked_dollar = "USD"

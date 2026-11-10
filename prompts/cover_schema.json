@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BYTE magazine cover record",
+  "description": "Describes only what is visible on the cover image. Use null when something is not visible or not legible.",
+  "type": "object",
+  "properties": {
+
+    "cover_text_reading_order": {
+      "description": "Every piece of the cover's own printed text, verbatim, in reading order (top to bottom and left to right). Text that is part of the artwork goes in artwork.description, not here. A piece is one visually distinct block in a single type style; a headline and its subtitle are separate pieces. Includes masthead, tagline, date, price, headlines, and small print. Excludes mailing labels, stamps, and handwriting.",
+      "type": "array",
+      "maxItems": 60,
+      "items": { "type": "string" }
+    },
+
+    "masthead_title": {
+      "description": "Magazine title exactly as printed in the masthead, e.g. 'BYTE'.",
+      "type": ["string", "null"]
+    },
+
+    "tagline": {
+      "description": "Slogan near the masthead, verbatim, e.g. 'the small systems journal'.",
+      "type": ["string", "null"]
+    },
+
+    "issue_date": {
+      "type": "object",
+      "properties": {
+        "as_printed": {
+          "description": "Date text exactly as printed, e.g. 'September 1975', 'Fall 1984', 'July/August'.",
+          "type": ["string", "null"]
+        },
+        "year": { "type": ["integer", "null"] },
+        "month": {
+          "description": "1-12, only when the cover gives a single month. Null for seasons, ranges, or no month.",
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 12
+        }
+      },
+      "required": ["as_printed", "year", "month"]
+    },
+
+    "volume_number": {
+      "type": "object",
+      "properties": {
+        "as_printed": {
+          "description": "Exactly as printed, e.g. 'Volume 6, Number 8'.",
+          "type": ["string", "null"]
+        },
+        "volume": { "type": ["integer", "null"] },
+        "number": { "type": ["integer", "null"] }
+      },
+      "required": ["as_printed", "volume", "number"]
+    },
+
+    "prices": {
+      "description": "One entry per printed price. Empty list if no price is visible.",
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "properties": {
+          "as_printed": {
+            "description": "Exactly as printed, e.g. '$2.50' or '$3.00 in Canada'.",
+            "type": "string"
+          },
+          "amount": { "type": ["number", "null"] },
+          "currency": {
+            "description": "ISO 4217 code if clear from the cover, e.g. 'USD', 'CAD', 'GBP'.",
+            "type": ["string", "null"]
+          },
+          "region": {
+            "description": "Country or region the price applies to, if printed.",
+            "type": ["string", "null"]
+          }
+        },
+        "required": ["as_printed", "amount", "currency", "region"]
+      }
+    },
+
+    "publisher_as_printed": {
+      "description": "Publisher name if printed on the cover, e.g. 'A McGraw-Hill Publication'.",
+      "type": ["string", "null"]
+    },
+
+    "special_or_theme_issue": {
+      "description": "Text on the cover that labels this as a special issue or names the issue's theme, verbatim, e.g. 'Special Issue: Smalltalk' or 'Theme: Graphics'. Null if the cover has no such label.",
+      "type": ["string", "null"]
+    },
+
+    "named_entities": {
+      "description": "Proper names only: specific products, companies, people, or named languages or standards, named in cover text or shown by a legible logo or label. Generic terms go in topics. Spelled exactly as printed; do not normalize variants. List each distinct name once.",
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name_as_printed": { "type": "string" },
+          "evidence": {
+            "type": "string",
+            "enum": ["cover_text", "visible_logo_or_label"]
+          }
+        },
+        "required": ["name_as_printed", "evidence"]
+      }
+    },
+
+    "topics": {
+      "description": "Free-text subject keywords for search, based on the cover text and artwork, e.g. 'robotics', 'education', 'BASIC', 'games'.",
+      "type": "array",
+      "maxItems": 12,
+      "items": { "type": "string" }
+    },
+
+    "artwork": {
+      "type": "object",
+      "properties": {
+        "medium": {
+          "type": "string",
+          "enum": ["painting", "illustration", "photograph", "diagram", "typography_only", "mixed", "unclear"]
+        },
+        "description": {
+          "description": "3-6 sentences for search and browsing: the objects, figures, setting, and actions depicted, how they are rendered, composition, and any text inside the artwork.",
+          "type": "string"
+        }
+      },
+      "required": ["medium", "description"]
+    },
+
+    "short_description": {
+      "description": "One sentence summarizing the cover, for display in browse and search results.",
+      "type": "string"
+    },
+
+    "non_original_marks": {
+      "description": "Material added after printing. Transcribed here, separate from the cover text, so it can be reviewed and removed.",
+      "type": "object",
+      "properties": {
+        "mailing_label_text": {
+          "description": "Text of any mailing or subscriber label, verbatim. Null if there is no label.",
+          "type": ["string", "null"]
+        },
+        "stamps_or_handwriting_text": {
+          "description": "Text of any stamps, stickers, or handwriting, verbatim. Null if none.",
+          "type": ["string", "null"]
+        },
+        "condition_or_scan_issues": {
+          "description": "e.g. 'torn corner', 'cropped edge', 'heavy glare', 'text cut off at top'.",
+          "type": "array",
+          "maxItems": 8,
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["mailing_label_text", "stamps_or_handwriting_text", "condition_or_scan_issues"]
+    },
+
+    "uncertainty_notes": {
+      "description": "One entry for each cut-off, hidden or partly legible text (anything marked [?]), each choice between two readings, and each inferred value. Empty list otherwise.",
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "description": "The field affected, as a dotted path, e.g. 'cover_text_reading_order', 'issue_date.month', 'artwork.medium'.",
+            "type": "string"
+          },
+          "note": {
+            "description": "What was hard to read or ambiguous.",
+            "type": "string"
+          }
+        },
+        "required": ["field", "note"]
+      }
+    }
+  },
+
+  "required": [
+    "cover_text_reading_order", "masthead_title", "tagline", "issue_date",
+    "volume_number", "prices", "publisher_as_printed", "special_or_theme_issue",
+    "named_entities", "topics", "artwork", "short_description",
+    "non_original_marks", "uncertainty_notes"
+  ]
+}
