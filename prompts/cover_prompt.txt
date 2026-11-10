@@ -44,7 +44,7 @@ ARTWORK
 - Use neutral language. Do not guess at the artist's intent or symbolism.
 - When describing people, describe what is visible (clothing, posture, action).
 - Do not infer race or ethnicity.
-- Do infer gender,  age, or professional identity.
+- Do infer gender, age, or professional identity.
 - Ignore any artist's signature in the artwork: do not look for it, transcribe it, or mention it. The artist is cataloged separately.
 
 SHORT DESCRIPTION

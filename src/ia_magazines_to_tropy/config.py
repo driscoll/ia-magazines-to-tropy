@@ -12,7 +12,7 @@ DATA_DIR = ROOT / "data"
 
 # Bump when prompts/cover_prompt.txt or cover_schema.json changes. Every record also
 # stores a SHA-256 hash of the exact prompt and schema it was made with.
-PROMPT_VERSION = "v7"
+PROMPT_VERSION = "v8"
 
 
 @dataclass
@@ -44,6 +44,10 @@ class Profile:
     @property
     def descriptions(self):
         return self.data / "descriptions.jsonl"  # model output, never edited
+
+    @property
+    def prompts(self):
+        return self.data / "prompts"             # the exact prompt and schema of each run, by hash
 
     @property
     def corrections(self):
@@ -118,6 +122,25 @@ def load_prompt(profile):
     text += "\n" + json.dumps(strip_descriptions(schema), separators=(",", ":"), ensure_ascii=False)
     sha = hashlib.sha256((text + json.dumps(schema, sort_keys=True)).encode()).hexdigest()
     return text, schema, sha
+
+
+def save_prompt(profile, prompt):
+    """Keep the exact prompt and schema with the data, named by the first 12 characters of
+    their hash: data/<profile>/prompts/<hash>.txt and <hash>.schema.json.
+
+    A record's prompt_sha256 identifies the prompt but can't recreate it, and the prompt
+    changes whenever the profile, prompts/cover_prompt.txt or the schema is edited. The
+    hash is the SHA-256 of the .txt file's text followed by the schema as JSON with sorted
+    keys. Existing files are left alone.
+    """
+    text, schema, sha = prompt
+    profile.prompts.mkdir(parents=True, exist_ok=True)
+    for path, content in ((profile.prompts / f"{sha[:12]}.txt", text),
+                          (profile.prompts / f"{sha[:12]}.schema.json",
+                           json.dumps(schema, indent=2, ensure_ascii=False) + "\n")):
+        if not path.exists():
+            path.write_bytes(content.encode("utf-8"))   # bytes: no newline translation on Windows
+    return profile.prompts / f"{sha[:12]}.txt"
 
 
 def read_jsonl(path):

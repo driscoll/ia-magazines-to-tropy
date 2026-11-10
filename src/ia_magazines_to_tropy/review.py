@@ -5,15 +5,19 @@
 
 Shows each cover next to a form with its record. Standard library only; plain HTML forms,
 no JavaScript. Listens on 127.0.0.1 only. To use it from another computer, use an SSH
-tunnel (see README), not a public address: the page has no login.
+tunnel, not a public address: the page has no login.
 
 Model output (data/<profile>/descriptions.jsonl) is never modified. Each save appends a
 row to data/<profile>/corrections.jsonl; the latest row for a cover wins. A save with no
 edits is recorded as "approved", one with edits as "corrected". Each row also carries the
 fields only a person enters (cover_artist, from the magazine's credits) and the
 reviewer's name.
+
+The reviewer's name is shown in a field on every cover's form and can be changed there;
+a change carries over to the following covers. It starts as --reviewer, else git's
+user.name, else the computer's login name.
 """
-import argparse, html, json, subprocess, threading
+import argparse, getpass, html, json, subprocess, threading
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -87,7 +91,9 @@ class Store:
                     latest[c["image"]] = c
         return latest
 
-    def save(self, image, record, status, source, cover_artist=None):
+    def save(self, image, record, status, source, cover_artist=None, reviewer=None):
+        if reviewer:
+            self.reviewer = reviewer  # a name changed in the form carries over to the next covers
         row = {"image": image, "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                "reviewer": self.reviewer, "status": status,
                "source_prompt": source.get("prompt"), "source_prompt_sha256": source.get("prompt_sha256"),
@@ -272,7 +278,7 @@ def cover_page(store, image, form=None, errors=None, saved=False):
     prev_link = f"<a href='/cover/{quote(names[i - 1])}'>&larr; previous</a>" if i > 0 else ""
     next_link = f"<a href='/cover/{quote(names[i + 1])}'>next &rarr;</a>" if i + 1 < len(names) else ""
     status = c["status"] if c else "unreviewed"
-    when = f" ({e(c['time'])})" if c else ""
+    when = f" ({e(c['time'])}{' by ' + e(c['reviewer']) if c.get('reviewer') else ''})" if c else ""
 
     msgs = ""
     if saved:
@@ -284,6 +290,7 @@ def cover_page(store, image, form=None, errors=None, saved=False):
         msgs += "<div class=problems><b>Consistency checks:</b><ul>" + "".join(f"<li>{e(p)}</li>" for p in probs) + "</ul></div>"
 
     artist = form.get("cover_artist", "") if form is not None else opt((c or {}).get("cover_artist"))
+    reviewer = form.get("reviewer", "") if form is not None else opt(store.reviewer)
     medium_opts = "".join(f"<option{' selected' if m == f['medium'] else ''}>{e(m)}</option>" for m in MEDIUMS)
     thinking = r.get("thinking") or ""
     reasoning = (f"<details><summary>Model reasoning ({len(thinking):,} characters)</summary>"
@@ -298,6 +305,7 @@ def cover_page(store, image, form=None, errors=None, saved=False):
 <form method=post action='/cover/{quote(image)}'>
 {msgs}
 <fieldset><legend>Entered by you</legend>
+{field("reviewer", "Reviewer", reviewer, hint="Your name, recorded with this save. A change carries over to the next covers.")}
 {field("cover_artist", "Cover artist (from the magazine's credits)", artist, hint="Not filled in by the model.")}
 </fieldset>
 <fieldset><legend>Summary</legend>
@@ -404,6 +412,9 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         form = {k: v[0] for k, v in parse_qs(self.rfile.read(length).decode(), keep_blank_values=True).items()}
         record, errors = from_form(form)
+        reviewer = " ".join(form.get("reviewer", "").split())
+        if not reviewer:
+            errors.insert(0, "Reviewer: enter your name")
         if errors:
             return self.send(400, cover_page(self.store, name, form=form, errors=errors))
         original = self.store.records()[name]
@@ -411,7 +422,7 @@ class Handler(BaseHTTPRequestHandler):
         # ""-vs-null differences the form normalizes away don't count as corrections
         baseline, _ = from_form(to_form(original["output"]))
         status = "approved" if record == baseline else "corrected"
-        self.store.save(name, record, status, original, form.get("cover_artist", "").strip() or None)
+        self.store.save(name, record, status, original, form.get("cover_artist", "").strip() or None, reviewer)
         names = list(self.store.records())
         i = names.index(name)
         if form.get("action") == "save_next":
@@ -423,11 +434,32 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+def default_reviewer(given=None):
+    """The reviewer's name and where it came from: --reviewer, else git's user.name, else
+    the login name (not everyone who has git has set a name, and a ZIP download needs no git)."""
+    if given and given.strip():
+        return given.strip(), "--reviewer"
+    try:
+        name = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True).stdout.strip()
+    except OSError:
+        name = ""
+    if name:
+        return name, "git user.name"
+    try:
+        name = getpass.getuser()
+    except Exception:  # no login name: the exception type differs across Python versions
+        name = ""
+    if name:
+        return name, "login name"
+    raise SystemExit('No reviewer name found: pass --reviewer "Your Name"')
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="ia2tropy review", description=__doc__.split("\n")[0])
     p.add_argument("profile")
     p.add_argument("--port", type=int, default=8000)
-    p.add_argument("--reviewer", help="name recorded on each save (default: git user.name)")
+    p.add_argument("--reviewer", help="name recorded on each save (default: git user.name, else your "
+                                      "login name); it can also be changed in the form")
     p.add_argument("--records", help="model output to review (default: data/<profile>/descriptions.jsonl)")
     p.add_argument("--corrections", help="where saves go (default: data/<profile>/corrections.jsonl)")
     a = p.parse_args(argv)
@@ -435,13 +467,11 @@ def main(argv=None):
     records = Path(a.records) if a.records else profile.descriptions
     if not records.exists():
         raise SystemExit(f"No records in {records}; run 'ia2tropy describe {a.profile}' first")
-    try:
-        git_name = subprocess.run(["git", "config", "user.name"], capture_output=True, text=True).stdout.strip()
-    except OSError:
-        git_name = ""
-    reviewer = a.reviewer or git_name or None
+    reviewer, source = default_reviewer(a.reviewer)
     Handler.store = Store(records, a.corrections or profile.corrections, reviewer)
     Handler.image_dir = profile.model_input
-    print(f"Reviewing {len(Handler.store.records())} covers at http://127.0.0.1:{a.port} as {reviewer}")
+    print(f"Reviewing {len(Handler.store.records())} covers at http://127.0.0.1:{a.port}")
+    print(f'Saving reviews as "{reviewer}" ({source}). To change it, pass --reviewer "Your Name" '
+          f"or edit the Reviewer field in the form.")
     ThreadingHTTPServer(("127.0.0.1", a.port), Handler).serve_forever()
 

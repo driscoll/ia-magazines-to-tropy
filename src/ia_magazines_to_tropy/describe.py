@@ -10,7 +10,8 @@ Appends one row per cover to data/<profile>/descriptions.jsonl as each cover fin
 the model's record, its reasoning (full text locally; a summary, when there is one,
 from the Anthropic API), timings, and provenance (git commit, software versions, model,
 prompt version and hash). The file is never edited; the review step writes corrections
-to a separate file.
+to a separate file. The exact prompt and schema of each run are kept in
+data/<profile>/prompts/, named by that hash.
 
 Safe to stop and restart: covers already described with the same model and prompt are
 skipped. Locally, a cover that runs out of tokens or returns invalid JSON is retried once
@@ -22,7 +23,8 @@ from pathlib import Path
 from PIL import Image
 
 from . import __version__
-from .config import PROMPT_VERSION, ROOT, append_jsonl, load_profile, load_prompt, read_jsonl, strip_descriptions
+from .config import (PROMPT_VERSION, ROOT, append_jsonl, load_profile, load_prompt, read_jsonl, save_prompt,
+                     strip_descriptions)
 
 NS = 1e9
 # Qwen's recommended sampling for thinking models. Greedy decoding (temperature 0)
@@ -234,6 +236,7 @@ def main(argv=None):
         f"{model} ({a.backend}), prompt {PROMPT_VERSION} ({prompt[2][:12]})")
     if not todo:
         return
+    say(f"Prompt and schema kept in {save_prompt(profile, prompt)}")
 
     prov = provenance(a.backend)
     if prov["git_dirty"]:

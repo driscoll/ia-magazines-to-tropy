@@ -9,8 +9,8 @@ the benchmark scripts and raw results are not part of this one.
 - **Describe what is on the cover, nothing more.** The model transcribes the cover's
   printed text exactly, in its original language and script, and describes the artwork
   in neutral terms. It is told not to use outside knowledge of the magazine, not to
-  identify people from their appearance, and not to infer anyone's race, ethnicity,
-  gender or age.
+  identify people from their appearance, and not to infer anyone's race or ethnicity.
+  It may infer gender, age and professional identity from what is visible.
 - **A person reviews every record.** The model's output is a draft. Automatic
   consistency checks point the reviewer to likely problems, and corrections are stored
   separately so the original output is never lost.
@@ -73,7 +73,8 @@ Timings are per cover with the 32b model at 2048 px.
 | v4 | Text that is part of the artwork moved out of the transcription; the named-entity type dropped | Valid records on all 10 test covers |
 | v5 | Artist signature task removed | Valid records on 9 of 10; one ran out of tokens |
 | v6 | Uncertainty notes required in specific situations (cut-off text, two readings, inferred values); closing reminders for the rules that failed most | Valid records on all 10; the first version whose local runs wrote uncertainty notes |
-| v7 | No uncertainty notes just because a field is not on the cover | Current version |
+| v7 | No uncertainty notes just because a field is not on the cover | Used for the model comparison below |
+| v8 | Describing people: gender, age and professional identity may be inferred from what is visible; race and ethnicity may not (v7 allowed none of these) | Current version |
 
 What this taught:
 
