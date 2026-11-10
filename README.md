@@ -175,6 +175,26 @@ When you import data into Tropy with the Internet Archive metadata, you need to 
 
 The vocabulary is this project's own, not the Internet Archive's; each field links to its definition in the Archive's [metadata schema](https://archive.org/developers/metadata-schema/index.html).
 
+## Documentation and reproducibility 
+
+Together with the manifest (`manifest.tsv`), these files document how every catalog record was made. All of them are in `data/<profile>/`.
+
+| File | Item | Content |
+|---|---|---|
+| `prompts/` (two files per run) | Prompt and schema | the exact prompt and schema of each run, in files named by the first 12 characters of the hash |
+| `descriptions.jsonl` (one record per cover, per run) | Model | the model's name and its digest |
+| | Prompt | the prompt version and a SHA-256 hash of the exact prompt and schema |
+| | Settings | the sampling settings |
+| | Performance | token counts and timings |
+| | Reasoning | the model's reasoning |
+| | Failed attempts | any attempts that did not produce a record |
+| | Environment | this repository's git commit and whether it had uncommitted changes; the tool, Ollama and Python versions; the computer's name and operating system; the start time |
+| `corrections.jsonl` (one record per save) | Reviewer | the reviewer's name |
+| | Time | when the save was made |
+| | Status | approved or corrected |
+| | Source | the model and prompt that produced the record under review |
+| | Record | the full corrected record |
+
 ## Using Claude (Anthropic API) instead of the local model
 
 1. Create an API key in the [Anthropic Console](https://console.anthropic.com/).
@@ -236,21 +256,6 @@ The [prompt](prompts/cover_prompt.txt) should apply to any magazine cover but it
 - **Settle the profile and the prompt before the full run.** Records are matched to the exact prompt, which includes the profile's values, so after any edit to either one `describe` starts over on every cover.
 
 You don't need to keep notes on your changes: each `describe` run saves the exact prompt and schema it used in `data/<name>/prompts/`.
-
-## What is recorded
-
-Each record in `descriptions.jsonl` keeps: the model and its digest, the prompt version
-and a SHA-256 hash of the exact prompt and schema (the prompt and schema themselves are
-saved in `data/<profile>/prompts/`, in files named by the first 12 characters of that
-hash), the sampling settings, token counts
-and timings, the model's reasoning, any failed attempts, and the environment (this
-repository's git commit and whether it had uncommitted changes, the tool, Ollama and
-Python versions, the computer's name and operating system, and the start time). 
-
-Each
-correction keeps the reviewer, the time, approved or corrected, the source model and
-prompt, and the full corrected record. Together with the manifest, that documents how
-every catalog record was made.
 
 ## Cautions
 
