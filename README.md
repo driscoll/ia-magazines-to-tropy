@@ -28,15 +28,15 @@ Other software:
 
 ### Choosing a model
 
-Measured on 10 BYTE covers (1975-1997) with the same [prompt](prompts/cover_prompt.txt). Local times are from one workstation (AMD Strix Halo, 128 GB unified memory); expect a laptop to be slower.
+Measured on 10 BYTE covers (1975-1997) with the same [prompt](prompts/cover_prompt.txt). The 8B local model was tested on a Macbook with an M5 chip and 24 GB of memory. The 32B model was tested on a workstation with an AMD Strix Halo chip and 128 GB of memory.
 
 | Model | Runs on | Time per cover (median) | 350 covers | Cost |
 |---|---|---|---|---|
-| `qwen3-vl:8b` (local) | Mac with Apple silicon and 16 GB memory or more; PC with a recent GPU | about 2.3 min | about 15 h | none |
-| `qwen3-vl:32b` (local, the default) | 48 GB memory or more | about 7 min | about 2 days | none |
+| `qwen3-vl:8b` (local) | Macbook with Apple Silicon and 16 GB memory or more; PC with a recent GPU | about 6.4 min | about 1.6 days | none |
+| `qwen3-vl:32b` (local) | 48 GB memory or more | about 7 min | about 2 days | none |
 | `claude-opus-5-5` (hosted) | any computer with internet | about 15 s | about 1.5 h | about $0.06 per cover |
 
-The models differed in how often they broke the prompt's rules and how often they reported their own uncertainty. For more detail on the comparison, see [docs/method.md](docs/method.md#comparing-three-models). Every record is reviewed by a person for consistency.
+The models differed in the detail and accuracy of their descriptions, how often they broke the prompt's rules and how often they reported their own uncertainty. For more detail on the comparison, see [docs/method.md](docs/method.md#comparing-three-models). Every record is reviewed by a person for consistency.
 
 ## Install ia-magazines-to-tropy
 
