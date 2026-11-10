@@ -74,7 +74,7 @@ Timings are per cover with the 32b model at 2048 px.
 | v5 | Artist signature task removed | Valid records on 9 of 10; one ran out of tokens |
 | v6 | Uncertainty notes required in specific situations (cut-off text, two readings, inferred values); closing reminders for the rules that failed most | Valid records on all 10; the first version whose local runs wrote uncertainty notes |
 | v7 | No uncertainty notes just because a field is not on the cover | Used for the model comparison below |
-| v8 | Describing people: gender, age and professional identity may be inferred from what is visible; race and ethnicity may not (v7 allowed none of these) | Current version |
+| v8 | Describing people: gender, age and professional identity may be inferred from what is visible; race and ethnicity may not (v7 allowed none of these) | Current version. Valid records on all 10 with the 32b model and with Claude. On the two covers that show people, Claude named gender and age ("a blonde woman", "a bald older man"); the 32b model still wrote "person" and "people" |
 
 What this taught:
 
