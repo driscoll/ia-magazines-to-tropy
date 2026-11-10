@@ -23,6 +23,7 @@ You will need access to a **vision-language model (VLM)**. There are two options
 Other software:
 - Python 3.11 or higher
 - **[uv](https://docs.astral.sh/uv/getting-started/installation/)** installs Python and the other dependencies for you.
+- **[Ollama](https://ollama.com/download)** to load the vision-language model
 - **[Tropy](https://tropy.org)** and its [CSV import plugin](https://github.com/tropy/tropy-plugin-csv/) to browse the collection
 
 ### Choosing a model
@@ -37,7 +38,7 @@ Measured on 10 BYTE covers (1975-1997) with the same [prompt](prompts/cover_prom
 
 The models differed in how often they broke the prompt's rules and how often they reported their own uncertainty. For more detail on the comparison, see [docs/method.md](docs/method.md#comparing-three-models). Every record is reviewed by a person for consistency.
 
-## Install
+## Install ia-magazines-to-tropy
 
 ```sh
 git clone https://github.com/driscoll/ia-magazines-to-tropy.git
@@ -48,7 +49,7 @@ uv sync --extra anthropic      # local OR hosted model
 
 Retrieve a local model with Ollama:
 ```sh
-ollama pull qwen3-vl:32b       # or qwen3-vl:8b on a smaller machine
+ollama pull qwen3-vl:8b       # or qwen3-vl:32 on a machine with lots of memory
 ```
 
 ## Quick start: five BYTE covers
@@ -156,7 +157,7 @@ This command creates a CSV file with all of the metadata and a folder with copie
 | `dc:subject` | topics and names, joined with "; " |
 | `dc:identifier`, `dc:source` | the Internet Archive item and its link |
 | `dcterms:provenance` | model, prompt version, review status, reviewer, date |
-| photo note | the cover text, one piece per line |
+| photo notes | two notes: the description of the artwork (the same text as `dc:description`, easier to read as a note), and the cover text, one piece per line |
 
 **Optional: copy the Internet Archive metadata into the Tropy record.** Every item already includes a link to its Internet Archive page (`dc:source`) but you may wish to keep a copy of it in Tropy as well. Add the "--with-ia" flag to your export command: 
 
