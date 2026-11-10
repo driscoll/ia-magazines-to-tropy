@@ -470,8 +470,20 @@ def main(argv=None):
     reviewer, source = default_reviewer(a.reviewer)
     Handler.store = Store(records, a.corrections or profile.corrections, reviewer)
     Handler.image_dir = profile.model_input
-    print(f"Reviewing {len(Handler.store.records())} covers at http://127.0.0.1:{a.port}")
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", a.port), Handler)
+    except OSError as err:
+        raise SystemExit(f"Can't start on port {a.port} ({err.strerror}). If another program is using it, "
+                         f"choose a different one, e.g. --port {a.port + 1}")
+    print(f"Reviewing {len(Handler.store.records())} covers. Open http://127.0.0.1:{a.port} in your browser.")
     print(f'Saving reviews as "{reviewer}" ({source}). To change it, pass --reviewer "Your Name" '
           f"or edit the Reviewer field in the form.")
-    ThreadingHTTPServer(("127.0.0.1", a.port), Handler).serve_forever()
+    print("The review app runs until you stop it: press Ctrl-C in this window when you are done.", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    print(f"\nReview app stopped. Your saves are in {Handler.store.corrections_path}")
 

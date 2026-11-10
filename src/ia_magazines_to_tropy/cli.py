@@ -20,4 +20,9 @@ def main():
         sys.exit(0 if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help") else 2)
     step = sys.argv[1]
     module = __import__(f"ia_magazines_to_tropy.{step}", fromlist=["main"])
-    module.main(sys.argv[2:])
+    try:
+        module.main(sys.argv[2:])
+    except KeyboardInterrupt:
+        # Ctrl-C is the normal way to stop a step, so don't show Python's error report
+        print("\nStopped. Finished work is kept: run the same command again to continue.", file=sys.stderr)
+        sys.exit(130)
