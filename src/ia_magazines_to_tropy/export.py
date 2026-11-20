@@ -30,7 +30,7 @@ from pathlib import Path
 
 import internetarchive
 
-from .config import latest_by_image, load_profile
+from .config import latest_by_image, latest_records, load_profile
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December"]
@@ -204,13 +204,16 @@ def main(argv=None):
         p.error("--refresh-ia and --ia-namespace only apply with --with-ia")
     profile = load_profile(a.profile)
 
-    records, corrections = latest_by_image(profile.descriptions), latest_by_image(profile.corrections)
-    records = {k: v for k, v in records.items() if v.get("valid_json")}
+    records, corrections = latest_records(profile.descriptions), latest_by_image(profile.corrections)
     images = [i for i in sorted(records) if a.include_unreviewed or i in corrections]
     if not images:
         raise SystemExit("Nothing to export: no reviewed covers (use --include-unreviewed to export anyway)")
     with open(profile.manifest, newline="", encoding="utf-8") as fh:
         manifest = {r["local_file"].rsplit(".", 1)[0]: r for r in csv.DictReader(fh, delimiter="\t")}
+    missing = [i for i in images if i not in manifest]
+    if missing:
+        raise SystemExit(f"Not in {profile.manifest}: {', '.join(missing)}. "
+                         f"Run 'ia2tropy fetch {a.profile}' again to add them.")
     ids = [manifest[i]["identifier"] for i in images]
     ia = ia_metadata(ids, profile.ia_cache, a.refresh_ia) if a.with_ia else None
 

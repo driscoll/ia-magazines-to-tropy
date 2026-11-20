@@ -3,8 +3,10 @@ at, not necessarily an error."""
 import json
 import re
 
-MONTHS = {m: i for i, m in enumerate(
-    "january february march april may june july august september october november december".split(), 1)}
+_MONTH_NAMES = "january february march april may june july august september october november december".split()
+# full names and the usual abbreviations ("AUG", "Sept."), as printed on covers
+MONTHS = {**{m[:3]: i for i, m in enumerate(_MONTH_NAMES, 1)}, "sept": 9,
+          **{m: i for i, m in enumerate(_MONTH_NAMES, 1)}}
 
 
 def norm(s):

@@ -24,7 +24,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, quote, unquote, urlparse
 
 from .checks import problems as v2_problems
-from .config import PROMPTS_DIR, load_profile
+from .config import PROMPTS_DIR, latest_records, load_profile
 
 SCHEMA = json.loads((PROMPTS_DIR / "cover_schema.json").read_text(encoding="utf-8"))
 _P = SCHEMA["properties"]
@@ -74,13 +74,7 @@ class Store:
         self.lock = threading.Lock()
 
     def records(self):
-        rows = {}
-        for line in self.records_path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                r = json.loads(line)
-                if isinstance(r.get("output"), dict):
-                    rows[r["image"]] = r
-        return dict(sorted(rows.items()))
+        return dict(sorted(latest_records(self.records_path).items()))
 
     def corrections(self):
         latest = {}

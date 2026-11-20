@@ -106,12 +106,17 @@ class HTTPRangeFile(io.RawIOBase):
         return len(data)
 
 
-def fetch_via_listing(identifier, archive, dest):
+def listing_members(identifier, archive):
+    """The .jp2 names in an archive, from archive.org's archive-browsing page."""
     base = f"https://archive.org/download/{quote(identifier)}/{quote(archive)}/"
     listing = get(base).text
     prefix = re.escape(f"//archive.org/download/{quote(identifier)}/{quote(archive)}/")
-    members = re.findall(rf'href="{prefix}([^"&]+\.jp2)"', listing, re.IGNORECASE)
-    member = first_page([unquote(m) for m in members])
+    return [unquote(m) for m in re.findall(rf'href="{prefix}([^"&]+\.jp2)"', listing, re.IGNORECASE)]
+
+
+def fetch_via_listing(identifier, archive, dest):
+    base = f"https://archive.org/download/{quote(identifier)}/{quote(archive)}/"
+    member = first_page(listing_members(identifier, archive))
     if member is None:
         raise LookupError("no .jp2 inside archive")
     with get(base + quote(member), stream=True) as r:
@@ -133,15 +138,34 @@ def fetch_via_range(identifier, archive, dest):
     return member
 
 
-def fetch_one(identifier, outdir):
+def member_on_disk(identifier, archive):
+    """Which member a file already on disk came from, found the same way fetching picks
+    it, without downloading the image again."""
+    try:
+        member = first_page(listing_members(identifier, archive))
+    except Exception:
+        if not archive.endswith(".zip"):
+            raise
+        url = f"https://archive.org/download/{quote(identifier)}/{quote(archive)}"
+        with zipfile.ZipFile(io.BufferedReader(HTTPRangeFile(url), 1 << 20)) as zf:
+            member = first_page(zf.namelist())
+    if member is None:
+        raise LookupError("no .jp2 inside archive")
+    return member
+
+
+def fetch_one(identifier, outdir, in_manifest=True):
     dest = outdir / f"{identifier}.jp2"
-    if dest.exists():
+    if dest.exists() and in_manifest:
         return identifier, "skip", None
     item = session.get_item(identifier)
     archives = [f["name"] for f in item.files if f["name"].endswith(ARCHIVE_SUFFIXES)]
     if not archives:
         return identifier, "fail", "no _jp2.zip or _jp2.tar in item"
     archive = sorted(archives, key=lambda a: not a.endswith(".zip"))[0]
+    if dest.exists():
+        # saved by a run that stopped before writing the manifest: add its row now
+        return identifier, "ok", f"{archive}/{member_on_disk(identifier, archive)}"
     try:
         member = fetch_via_listing(identifier, archive, dest)
     except Exception as e:
@@ -194,7 +218,7 @@ def main(argv=None):
     manifest = load_manifest(profile.manifest)
     counts = {"ok": 0, "skip": 0, "fail": 0}
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        futs = {pool.submit(fetch_one, i, outdir): i for i in ids}
+        futs = {pool.submit(fetch_one, i, outdir, i in manifest): i for i in ids}
         for n, fut in enumerate(as_completed(futs), 1):
             try:
                 ident, status, info = fut.result()

@@ -17,7 +17,7 @@ Safe to stop and restart: covers already described with the same model and promp
 skipped. Locally, a cover that runs out of tokens or returns invalid JSON is retried once
 with the next seed and a larger token cap; the failed attempt is kept in the row.
 """
-import argparse, base64, io, json, os, platform, subprocess, sys, time, urllib.request
+import argparse, base64, io, json, os, platform, subprocess, sys, time
 from pathlib import Path
 
 from PIL import Image
@@ -35,7 +35,7 @@ ANTHROPIC_PRICES = {"input": 4.00, "output": 20.00, "cache_write": 5.00, "cache_
 ANTHROPIC_MAX_IMAGE_B64 = 9_500_000   # the API limit is 10 MB base64 per image
 
 
-def provenance(backend):
+def provenance(backend, client=None):
     def git(*args):
         try:
             return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,
@@ -48,10 +48,12 @@ def provenance(backend):
             "host": platform.node(), "os": platform.platform(), "python": platform.python_version(),
             "run_started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     if backend == "ollama":
+        # ask the server the client talks to (OLLAMA_HOST, if set), not always this computer.
+        # The ollama package has no public call for the server version, so this uses its
+        # underlying HTTP client, which carries the resolved host.
         try:
-            with urllib.request.urlopen("http://127.0.0.1:11434/api/version", timeout=5) as r:
-                prov["ollama_version"] = json.load(r).get("version")
-        except OSError:
+            prov["ollama_version"] = client._client.get("/api/version", timeout=5).json().get("version")
+        except Exception:
             prov["ollama_version"] = None
     else:
         import anthropic
@@ -230,17 +232,17 @@ def main(argv=None):
     if not covers:
         raise SystemExit(f"No images in {profile.model_input}; run 'ia2tropy prepare {a.profile}' first")
     todo = [c for c in covers if c.stem not in done or (a.retry_failed and not done[c.stem])]
-    if a.limit:
+    n_done = len(covers) - len(todo)
+    later = len(todo) - a.limit if a.limit and len(todo) > a.limit else 0
+    if later:
         todo = todo[:a.limit]
-    say(f"{len(covers)} covers, {len(covers) - len(todo)} already done, {len(todo)} to describe with "
-        f"{model} ({a.backend}), prompt {PROMPT_VERSION} ({prompt[2][:12]})")
+    say(f"{len(covers)} covers, {n_done} already done, {len(todo)} to describe"
+        + (f" ({later} more left for a later run by --limit)" if later else "")
+        + f" with {model} ({a.backend}), prompt {PROMPT_VERSION} ({prompt[2][:12]})")
     if not todo:
         return
     say(f"Prompt and schema kept in {save_prompt(profile, prompt)}")
 
-    prov = provenance(a.backend)
-    if prov["git_dirty"]:
-        say("Note: uncommitted changes to tracked files; the recorded git commit won't fully describe the code")
     if a.backend == "ollama":
         import ollama
         client = ollama.Client()
@@ -255,6 +257,9 @@ def main(argv=None):
                     think=True, keep_alive="30m", options={"num_predict": 8, "num_ctx": a.num_ctx})
     else:
         client, digest = anthropic_client(a.api_key_file), None
+    prov = provenance(a.backend, client)
+    if prov["git_dirty"]:
+        say("Note: uncommitted changes to tracked files; the recorded git commit won't fully describe the code")
 
     times, failed, cost = [], [], 0.0
     for n, path in enumerate(todo, 1):

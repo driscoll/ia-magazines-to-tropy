@@ -155,6 +155,13 @@ def latest_by_image(path):
     return {r["image"]: r for r in read_jsonl(path)}
 
 
+def latest_records(path):
+    """The last row with a record (output that parsed as a JSON object) for each image in
+    descriptions.jsonl. A later run that failed on a cover doesn't hide its earlier record.
+    Review and export both use this, so they show and export the same record."""
+    return {r["image"]: r for r in read_jsonl(path) if isinstance(r.get("output"), dict)}
+
+
 def append_jsonl(path, row):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
